@@ -4,6 +4,7 @@ cheatsheets/
 I tend to forget them.
 
 docs/
+
 	Various short (or not so short) documents, for users, developers and
 myself.  A large part of these are in Dutch.
 
@@ -22,6 +23,10 @@ to work in your setup, and some might even fail spectacularly, so:
 	I'm also not going to support these scripts, but patches are welcome.
 (No guarantees I'll apply them though - so feel free to distribute your own
 versions!)
+
+patches/
+
+	Patches or plugins for existing software.  E.g. Munin plugins.
 
 
 -- 
