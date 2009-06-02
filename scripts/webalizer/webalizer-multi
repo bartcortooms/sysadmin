@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# A wrapper script for webalizer, to generate webalizer reports for multiple
+# sites.
+
+# Defaults
+SITES_BASE_DIR=/var/www
+OUTPUT_DIR=/var/www/webalizer
+LOGS=/var/log/apache2
+WEBALIZER_BIN=/usr/bin/webalizer
+WEBAZOLVER_BIN=/usr/bin/webazolver
+
+# Get custom values for the above variables
+test -f /etc/webalizer-multi.conf && source /etc/webalizer-multi.conf
+
+# Allow the configuration to be overriden from the commandline
+if [ $# -eq 3 ]; then
+    SITES_BASE_DIR="$1"
+    OUTPUT_DIR="$2"
+    LOGS="$3"
+elif [ $# -ne 0 ]; then
+    echo "usage: $0 <sites_base_dir> <webalizer_output_dir> <logfile>|<logdir>"
+    exit 1
+fi
+
+# Check that the directory containing the sites exits.
+[ -d ${SITES_BASE_DIR} ] || exit 1
+
+for sitedir in "$SITES_BASE_DIR"/*; do
+    [ -d "$sitedir" ] || continue
+
+    # Don't generate reports for the webalizer dir
+    [ "$sitedir" = "$OUTPUT_DIR" ] && continue
+
+    # Determine the domain name
+    domain=$(basename "$sitedir")
+
+    # Directory with the webalizer stats for the domain
+    statsdir="$OUTPUT_DIR/$domain"
+    [ -d "$statsdir" ] || mkdir "$statsdir"
+
+    # Replace 'domain.nl' with 'www.domain.nl' as the preferred hostname
+    # for the webpage. (But don't change e.g. forum.domain.nl.)
+    hostname=$(echo "$domain" | sed 's/^[^.]\+\.[^.]\+$/www.&/')
+
+    # Make sure webalizer picks up any optional webalizer.conf files in the
+    # stats directory, to allow webalizer directives to be overridden on a
+    # site-by-site basis.
+    cd "$statsdir"
+
+    if [ -d "$LOGS" ]; then
+        # If $LOGS is a dir, append the name of the logfile to the dir
+        logfile="$LOGS/$domain-access.log"
+        pattern="^"
+    else
+        logfile="$LOGS"
+
+        # Need to grep for $domain if this is a single log file for multiple sites.
+        if [ "${domain#www.}" = "$domain" ]; then
+            pattern=" (www\.)?${domain//./\\.}$"
+        else
+            pattern=" ${domain//./\\.}$"
+        fi
+    fi
+
+    # Run webalizer on both the non-rotated and rotated logfile.  (This will
+    # only happen if $logfile is not a rotated log file itself already.)
+    for logfile in $logfile{.1,}; do
+
+        # Need to use zgrep for compressed logfiles
+        [ "${logfile%.gz}" = "$logfile" ] && grep=grep || grep=zgrep
+
+        # Can we read the logfile?
+        [ -r "$logfile" ] || continue
+
+        # Is there anything interesting in the logfile?
+        $grep -E -q "$pattern" "$logfile" || continue
+
+        # Run webazolver and webalizer quietly
+        for command in $WEBAZOLVER_BIN $WEBALIZER_BIN; do
+            $grep -E "$pattern" "$logfile" | \
+              $command -Q -D $OUTPUT_DIR/dns_cache.db -p \
+                       -r "$domain" -r "www.$domain" -r "${domain#www.}" \
+                       -n "$hostname" -o "$statsdir" -
+        done
+    done
+done
