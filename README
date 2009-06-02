@@ -24,9 +24,10 @@ to work in your setup, and some might even fail spectacularly, so:
 (No guarantees I'll apply them though - so feel free to distribute your own
 versions!)
 
-patches/
+modifications/
 
-	Patches or plugins for existing software.  E.g. Munin plugins.
+	Modifications or additions for existing software.  E.g. Munin plugins
+and modified init scripts.
 
 
 -- 
