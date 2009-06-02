@@ -1,0 +1,4 @@
+An init script for mk-slave-delay, which is part of Maatkit.
+
+See my bug report at http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=511705
+for a patch for the Debian package.

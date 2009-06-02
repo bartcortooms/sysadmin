@@ -1,0 +1,7 @@
+# Defaults for mk-slave-delay - sourced by /etc/init.d/mk-slave-delay
+
+# Start mk-slave-delay on boot?
+START=yes
+
+# Startup options for mk-slave-delay
+DAEMON_OPTS="--delay <%= mysql_slave_delay %> --interval 10s --defaults-file /etc/mysql/debian.cnf --host localhost"
