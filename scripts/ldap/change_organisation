@@ -11,20 +11,20 @@
 ldapsearch -x -LLL objectclass=inetOrgPerson o | \
 
 awk '   function print_ldif_command(dn, org)
-        {
-                print "dn:", dn
-                print "changetype: modify"
-                print "replace: o"
+	{
+		print "dn:", dn
+		print "changetype: modify"
+		print "replace: o"
 		print "#", org
 		gsub("ACME Inc", "ACME Corp", org)
 		print org
 		print
-        }
+	}
 
-        /^dn: / { org = ""; dn = $2 }
-        /^o: / { org = $0 }
+	/^dn: / { org = ""; dn = $2 }
+	/^o: / { org = $0 }
 
-        /^ *$/ {
+	/^ *$/ {
 		if (org)
 			print_ldif_command(dn, org)
-             }'
+	}'

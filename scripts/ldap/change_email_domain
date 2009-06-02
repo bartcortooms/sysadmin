@@ -16,22 +16,22 @@ awk '   function is_empty(array) {
 	}
 
 	function print_ldif_command(dn, mail)
-        {
-                print "dn:", dn
-                print "changetype: modify"
-                print "replace: mail"
+	{
+		print "dn:", dn
+		print "changetype: modify"
+		print "replace: mail"
 		for (address in mail) {
 			print "#", address
 			gsub("example.com", "newdomain.com", address)
 			print "mail:", address
 		}
 		print
-        }
+	}
 
-        /^dn: / { delete mail; dn = $2 }
-        /^mail: / { mail[$2] = $2 }
+	/^dn: / { delete mail; dn = $2 }
+	/^mail: / { mail[$2] = $2 }
 
-        /^ *$/ {
+	/^ *$/ {
 		if (!is_empty(mail))
 			print_ldif_command(dn, mail)
-             }'
+}'
