@@ -1,0 +1,35 @@
+#!/usr/bin/python
+#
+# For a physical server, show the memory details for the running virtual
+# machines with libvirt
+
+import re, sys, os
+import libvirt
+
+server = sys.argv[1]
+
+conn = libvirt.openReadOnly("xen://%s/" % server)
+hostname = conn.getHostname()
+hostmem = conn.getInfo()[1]
+usedmem = 0
+output = ""
+
+ids = conn.listDomainsID()
+for id in ids:
+    host = conn.getHostname()
+    try:
+        dom = conn.lookupByID(id)
+        name = dom.name()
+        mem = dom.info()[2] / 1024
+        usedmem = usedmem + mem
+    except libvirt.libvirtError, err:
+        print >>sys.stderr, "Id: %s: %s" % (id, err)
+        continue
+
+    output = output + "%16s % 12d MB  % 12d MB\n" % (name, mem, 0)
+
+freemem = hostmem - usedmem - 1024
+if freemem < 0: freemem = 0
+print "%-16s % 12d MB  % 12d MB" % (hostname, hostmem, freemem)
+print output
+output = ""

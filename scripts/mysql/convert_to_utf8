@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# Converts a MySQL database from latin1 to utf8.  (Assumes we're on Debian.)
+
+if [ $# -ne 2 ]; then
+	echo "usage: $0 <from_db> <to_db>"
+	exit 1
+fi
+
+fromdb="$1"
+todb="$2"
+
+mysqldump --defaults-extra-file=/etc/mysql/debian.cnf "$fromdb" | iconv -f latin1 -t utf8 | sed 's/latin1/utf8/g' | \
+	mysql --defaults-extra-file=/etc/mysql/debian.cnf --default-character-set=utf8 "$todb"

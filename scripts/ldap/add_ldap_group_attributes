@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# Returns output in LDIF formaat, which can be used for adding new attributes
+# to each LDAP group.
+#
+# Call with:
+#
+#	./add_group_attributes > modified.ldif
+# 	ldapmodify -x -W -D 'cn=admin,dc=example,dc=com' -f modified.ldif
+
+ldapsearch -x -L objectclass=posixGroup cn | \
+
+awk '	function print_ldif_command(dn)
+	{
+		print "dn: " dn
+		print "add: o"
+		print "o: ACME Inc"
+		print "-"
+		print "add: description"
+		print "description: unknown"
+		print ""
+	}
+
+	/^dn: /		{ dn = $2; }
+
+	/^ *$/ {
+		if (dn)
+			print_ldif_command(dn)
+
+		dn = ""
+	}'

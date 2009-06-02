@@ -1,0 +1,3 @@
+# Renumbers the names of blades in filenames of the form foo_blade18_bar to
+# foo_blade301_bar
+oldhost=18; newhost=301; while [ $newhost -lt 308 ]; do rename -v "s/^blade$oldhost/blade$newhost/" blade${oldhost}-dom0*; let oldhost=$oldhost+1; let newhost=$newhost+1; done

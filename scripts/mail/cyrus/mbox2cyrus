@@ -1,0 +1,208 @@
+#!/usr/bin/perl
+#
+# Converts mbox archives which have been created with outlook2mbox to cyrus
+# mailboxes.
+
+use strict;
+use Cyrus::IMAP::Admin;
+use File::Find;
+use File::Copy;
+use Getopt::Std;
+use Cwd;
+
+our ($opt_n, $opt_v);
+getopts('nv');
+
+my $verbose = $opt_v;
+my $act = not $opt_n;
+
+my $SIEVE_SKEL = "/var/spool/cyrus/phpscript";
+my $SIEVE_DIR = "/var/spool/sieve";
+
+my $client = Cyrus::IMAP::Admin->new('localhost');
+
+$client->authenticate(User => 'cyrus', Password => 'yourpassword');
+
+find({ wanted => \&convert, no_chdir => 1 }, @ARGV);
+
+sub convert {
+	my @exists;
+	my $full_target_mbox;
+	my $subfolder;
+	my $source_mbox;
+	my $user;
+	my $file;
+	my $dest_dir;
+	my $folder;
+
+	return unless -d;
+
+	# Only convert Personal Folders
+	return unless (/([^\/]+)\/Personal Folders\/(.*)/);
+	$user = $1;
+	$source_mbox = $2;
+
+	# 'Sent Items' is normally called 'Sent' in IMAP mailboxes.
+	$source_mbox =~ s/Sent Items/Inbox\/Sent/;
+
+	if ($source_mbox =~ /Inbox$/) {
+		# 'Inbox' is the root folder.
+		$subfolder = "";
+	} elsif ($source_mbox =~ /Inbox\/(.*)/) {
+		# All other folders which are a regular subfolder of Inbox.
+		$subfolder = $1;
+
+		# Not all characters are allowed for the foldername.
+		$subfolder =~ s/\.//g;
+		$subfolder =~ s/\//./g;
+		$subfolder =~ s/ \& / en /g;
+		$subfolder =~ s/\&/ en /g;
+		$subfolder =~ s/([^@,.a-zA-Z-0-9_ -])//g;
+	} else {
+		# Don't migrate any other folders. (These are the uninteresting
+		# ones, like Deleted Items.)
+		print STDERR "'$_' will not be migrated.\n";
+		return;
+	}
+
+	if ($subfolder ne "") {
+		$full_target_mbox = "user.$user.$subfolder";
+	} else {
+		$full_target_mbox = "user.$user";
+	}
+
+	print "$_ -> $full_target_mbox\n" if $verbose;
+
+	print "IMAP folder '$full_target_mbox' " if $verbose;
+
+	# Check to see if the mailboxes needs to be created.
+	@exists = $client->list($full_target_mbox);
+	if (@exists->[0]->[0] eq "") {
+		print "does NOT exist.\n" if $verbose;
+
+		# Create folder and subscribe to it.
+
+		# XXX This isn't 100% failsafe. Still need to _always_
+		# check first if the user mailbox exists, _then_ create
+		# subfolders.
+		if ($subfolder ne "") {
+			print "Creating mailbox '$full_target_mbox'\n";
+			$client->create($full_target_mbox) if $act;
+			&subscribe($full_target_mbox, $user);
+		} else {
+			# The user mailbox did not yet exist. Create
+			# some default mailboxes and a Sieve filter.
+			print "Creating mailbox for $user and the default Drafts, Sent, Spam and Trash folders.\n";
+
+			foreach $folder ("user.$user",
+					 "user.$user.Drafts",
+					 "user.$user.Sent",
+					 "user.$user.Spam",
+					 "user.$user.Trash") {
+				$client->create("$folder") if $act;
+				&subscribe($folder, $user);
+			}
+
+			print "Copying default Sieve script.\n";
+
+			# Cyrus uses "u/username"-style directories.
+			$dest_dir = $SIEVE_DIR . "/" . substr($user, 0, 1) . "/$user";
+
+			unless (-d $dest_dir) {
+				print "Creating $dest_dir\n";
+				mkdir($dest_dir) if $act;
+			}
+
+			print "Copying $SIEVE_SKEL to $dest_dir/phpscript.script\n" if $verbose;
+			copy($SIEVE_SKEL, "$dest_dir/phpscript.script") if $act;
+
+			print "Symlinking $dest_dir/phpscript.script to $dest_dir/default\n" if $verbose;
+
+			# Do a chdir, so the symlink can be a relative pathname.
+			my $cwd = getcwd();
+			chdir($dest_dir);
+			symlink("phpscript.script", "default") if $act;
+			chdir($cwd);
+		}
+	} else {
+		print "exists.\n" if $verbose;
+	}
+
+	# Check to see if an mbox file which should contain the mail exists.
+	$file = "$_/mbox";
+
+	unless (-s $file) {
+		print STDERR "'$file' does not exist or is empty.\n";
+		return;
+	}
+
+	if ($verbose) {
+		print "Converting '$file'\n";
+	}
+
+	# Only convert mail if this is for real.
+	unless ($act) {
+		if ($verbose) {
+			print "No Action. Converting mail will be skipped.\n";
+		}
+		return;
+	}
+
+	# Escape spaces in folder names for cyrdeliver. (Otherwise cyrdeliver
+	# will exit with the error "Bad protocol").
+	$subfolder =~ s/ /\\ /g;
+	$subfolder =~ s/,/\\,/g;
+
+	if ($verbose) {
+		print "Delivering to '$subfolder'.\n";
+	}
+
+	# Open a pipe to formail. Formail delivers every mail with
+	# cyrdeliver.
+	if ($subfolder ne "") {
+		open(OUTPUT, '|-', 'formail', '-I', 'From ', '-s',
+		               '/usr/sbin/cyrdeliver', '-r', 'root@localhost',
+		               '-a', $user, '-m', $subfolder, $user);
+	} else {
+		open(OUTPUT, '|-', 'formail', '-I', 'From ', '-s',
+		               '/usr/sbin/cyrdeliver', '-r', 'root@localhost',
+		               '-a', $user, $user);
+	}
+
+	open(MBOX, $file) || die("Can't open $file: $!");
+	while (<MBOX>)
+	{
+		print OUTPUT $_;
+	}
+	close OUTPUT;
+
+	# Give Cyrus some time to process the mail.
+	# XXX This shouln't be necessary. Not even sure it helps.
+	sleep(1);
+}
+
+sub subscribe {
+	my ($folder, $user) = @_;
+	my $file;
+
+	# Cyrus uses "u/username"-style directories.  XXX Harcoded path.
+	$file = "/var/lib/cyrus/user/" . substr($user, 0, 1) . "/$user.sub";
+
+	if ($verbose) {
+		print "Adding subscription for '$folder' to '$file'\n";
+	}
+
+	if ($act) {
+		open(OUTPUT, ">> $file") || die("Can't open $file: $!");
+		print OUTPUT "$folder\t\n";
+	}
+
+	close(OUTPUT);
+
+	# XXX Should only need to do this once.
+	if ($act) {
+		# Change owner to mail:cyrus.  XXX Hardcoded uid/gid.
+		chown 105, 8, $file || die ("Could not set owner for '$file': $!");
+		chmod 0600, $file || die ("Could not set permissions for '$file': $!");
+	}
+}

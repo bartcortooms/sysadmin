@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Call with ". start-ssh-agent" of "source start-ssh-agent"
+
+AGENT_SETTINGS=~/.ssh/agent-$HOSTNAME
+
+# valid_settings checks if the ssh-agent for which the settings have been saved
+# is still running.
+valid_settings ()
+{
+	. "$AGENT_SETTINGS" > /dev/null 2>&1 && test -n "$SSH_AGENT_PID" && \
+	( ps x | awk '$5 ~ /^ssh-agent$/ {print $1}' | grep -q $SSH_AGENT_PID )
+}
+
+if [ -z "$SSH_AUTH_SOCK" ]; then
+	# Is a usable ssh-agent running?
+	if [ -f "$AGENT_SETTINGS" ]; then
+		valid_settings || rm -f "$AGENT_SETTINGS"
+	fi
+
+	if [ ! -f "$AGENT_SETTINGS" ]; then
+		# Start new agent
+		if ( umask 077 && ssh-agent > "$AGENT_SETTINGS" ); then
+			. "$AGENT_SETTINGS"
+		else
+			\rm -f "$AGENT_SETTINGS"
+			echo Could not start agent
+		fi
+	fi
+fi
+
+unset valid_settings
+unset AGENT_SETTINGS

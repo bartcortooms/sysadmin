@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Returns output in LDIF formaat, which can be used for changing the
+# organization in LDAP entries.
+#
+# Call with:
+#
+#       ./change_organisation > orgchange.ldif
+#       ldapmodify -Z -x -W -D 'cn=admin,dc=example,dc=com' -f orgchange.ldif
+
+ldapsearch -x -LLL objectclass=inetOrgPerson o | \
+
+awk '   function print_ldif_command(dn, org)
+        {
+                print "dn:", dn
+                print "changetype: modify"
+                print "replace: o"
+		print "#", org
+		gsub("ACME Inc", "ACME Corp", org)
+		print org
+		print
+        }
+
+        /^dn: / { org = ""; dn = $2 }
+        /^o: / { org = $0 }
+
+        /^ *$/ {
+		if (org)
+			print_ldif_command(dn, org)
+             }'

@@ -1,0 +1,42 @@
+= Bart's Mostly Obvious Sysadmin Rules =
+
+Rule #1 - Assumption is the mother of all fuckups
+
+Ga er niet vanuit dat iets werkt zoals je vermoedt dat het werkt, maar zorg
+ervoor dat je het 100% zeker weet.  Als je het niet zeker weet, CHECK!
+
+Rule #2 - Find the root cause of a problem
+
+Los het probleem op bij de bron, zodat het zich niet op een andere manier weer
+opnieuw manifesteert.  Zorg er in ieder geval voor dat je wel WEET wat de bron
+van het probleem is.  Soms is het niet praktisch om de bron van het probleem op
+te lossen en is er een work-around nodig, maar dat kun je pas beoordelen als je
+weet wat de daadwerkelijke oorzaak (en niet een bijeffect) van een probleem is.
+
+Rule #3 - Entropy is the root of all evil
+
+Hoe meer verrassingen er zijn, hoe ingewikkelder het is om iets te onderhouden.
+Zorg ervoor dat dingen consistent zijn. Als je een nieuw naamschema voor
+Wordpress MySQL databases introduceert, hernoem dan ook alle bestaande
+databases.
+
+Rule #4 - Test your changes
+
+Als je een verandering maakt, test of het werkt!  Laat klanten niet het
+testwerk doen, zorg dat je zelf ook al goed getest hebt voordat je een klant
+doorgeeft dat iets is aangepast. Ga er zeer zeker niet vanuit dat een
+niet-geteste verandering werkt. Zie ook: "Assumption is the mother of all
+fuckups".
+
+Rule #5 - Do not start with temporary hacks
+
+Tijdelijke hacks raken vergeten en worden vervolgens nooit meer verbeterd. Get
+things right from the start, whenever possible.  :Dit geldt des te meer voor
+wachtwoorden. Stel niet tijdelijk een simpel wachtwoord in, denkende: "dat
+verander ik later wel". You WILL forget, and your server WILL get rooted!
+
+Rule #6 - Don't drink & sudo
+
+Rule #?? - Fuck the rules!
+
+Deze regels zijn geen excuus om je gezond verstand uit te schakelen.

@@ -1,0 +1,44 @@
+#!/usr/bin/perl -w
+#
+# Used this once for recovering some data from bounce mails.  A form on a
+# website sent its form submits to a mail address.  This mail address bounced,
+# leaving a bunch of bounce mails with the submitted form data in a maildir.
+#
+# This script reads the maildir, pulls the relevant data from all those form
+# submits together, and outputs a list with the data.
+
+use strict;
+use MIME::Parser;
+
+my $file;
+my $entity;
+my $count = 1;
+
+@ARGV or unshift @ARGV, "-";
+while (defined($file = shift @ARGV)) {
+	my $parser = new MIME::Parser;
+	$parser->output_to_core(1);
+
+	open FILE, $file or die "couldn't open $file";
+	$entity = $parser->read(\*FILE) or
+	    print STDERR "Could not process MIME attachment in $file; next...\n";
+	close FILE;
+
+	foreach my $part ($entity->parts) {
+		print "Number: " . $count++ . "\n";
+		print "Submitted at: " . $entity->head->get("Date");
+		my $printed_newline = 1;
+		for my $line (split(/\n/, $part->bodyhandle->as_string)) {
+			if ($line =~ /<th[^>]+>([^<]+)<\/th>/) {
+				print "\n" unless $printed_newline;
+				print "$1: ";
+				$printed_newline = 0;
+			}
+			if ($line =~ /<span>([^<]+)<\/span>/) {
+				print "$1\n";
+				$printed_newline = 1;
+			}
+		}
+		print "\n\n";
+	}
+}

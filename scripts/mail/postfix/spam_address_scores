@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# 
+# For: Postfix + Amavis
+# 
+# Reads stdin (usually a Postfix log file) and returns the recipient address
+# and its logged spam score for every spam mail which has a score > 5.
+#
+# Can be used to count the amount of spam per domain.  E.g.:
+# 
+#  (cat /var/log/mail.log{.1,}; zcat /var/log/mail.log.*.gz) | ./parselogs | cut -d@ -f2 | cut -d: -f1 | sort | uniq -c
+#      1 EXAMPLE.COM
+#      1 EXAMPLE.NL
+#   4017 example.com
+#    662 example.nl
+
+use strict;
+
+while (<>) {
+       next unless /-> <([^>]+)>,.*Hits: ([-0-9.]+)/;
+       my ($recipient, $score) = ($1, $2);
+
+       while (not /orig_to=<([^>]+)>/) {
+               $_ = <>;
+       }
+       /orig_to=<([^>]+)>/;
+       my $orig_to = $1;
+
+       print "$orig_to: $score\n" if $score > 5;
+};

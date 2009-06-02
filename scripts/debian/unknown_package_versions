@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# Horribly inefficient script which shows installed packages with a version
+# which deviates from the version in the main Debian repository. Input should
+# be of the form:
+#
+#   status package_name installed_version description
+#
+# You can generate the required input format for the currently installed
+# packages with:
+#
+#  COLUMNS=999 dpkg -l | sed '1,5d'
+#
+# This is useful for checking for manually installed packages from other
+# repositories, or for packages which were at one time available in the
+# repository, but not in the current repository.
+#
+# The first argument to the script needs to be the location of the Packages
+# file, e.g:
+#
+#  COLUMNS=999 dpkg -l | sed '1,5d' | \
+#   ./unknown_package_versions /var/lib/apt/lists/ftp.nl.debian.org_debian_dists_etch_main_binary-amd64_Packages
+#
+# The output is of the same form as the input, but only shows those packages
+# which are not found in the repository.
+#
+# You can chain the output from this script to check in multiple repositories,
+# e.g.:
+# 
+#  COLUMNS=999 dpkg -l | sed '1,5d' | \
+#   ./unknown_package_versions /var/lib/apt/lists/ftp.nl.debian.org_debian_dists_etch_main_binary-amd64_Packages | \
+#   ./unknown_package_versions /var/lib/apt/lists/security.debian.org_debian_dists_etch_main_binary-amd64_Packages
+#
+# This only show packages which are neither in the main Debian archive nor in
+# the official Debian security updates repository.
+
+while read status package version description; do
+	grep-dctrl -q -X -P "$package" -a -F Version "$version" $1 || echo "$status $package $version $description"
+done

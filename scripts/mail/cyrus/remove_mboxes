@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+#
+# Reads a list of mailboxes from stdin and removes those mailboxes.
+
+use strict;
+use Cyrus::IMAP::Admin;
+
+my $admin = "cyrus";
+my $admin_pass = "foo";
+
+my $client = Cyrus::IMAP::Admin->new("localhost");
+
+$client->authenticate('login', 'imap', '', $admin, '0', '10000', $admin_pass);
+
+(print $client->{error} && return(1)) if $client->{error};
+
+while (<>) {
+    chop $_;
+    $client->setaclmailbox("user.$_", "$admin" => "c") || die "mailbox user.$_: " . $client->error();
+    $client->deletemailbox("user.$_") || die "mailbox user.$_: " . $client->error();
+    print "user.$_ removed\n";
+}

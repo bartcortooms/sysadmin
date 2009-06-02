@@ -1,0 +1,44 @@
+<h1>Some unscientific benchmarks measuring the effect of jumbo frames and Xen
+on ethernet throughput.</h1>
+
+<p>The benchmark was done with netpipe-tcp. All numbers are in MBit/sec, and
+are averaged over 3 runs of NPtcp.</p>
+
+<table class="listing">
+        <thead>
+                <tr>
+                        <th rowspan="2">MTU</th>
+                        <th rowspan="2">No Xen</th>
+                        <th colspan="2">Xen dom0 &lt;-&gt; dom0</th>
+                        <th rowspan="2">domU &lt;-&gt; domU</th>
+                </tr>
+                <tr>
+                        <th>Without bridging+bonding</th>
+                        <th>With bridging+bonding</th>
+                </tr>
+        </thead>
+        <tbody>
+                <tr>
+                        <th>1500</th>
+                        <td>896.734</td>
+                        <td>Not tested</td>
+                        <td>897.024</td>
+                        <td>895.774</td>
+                </tr>
+                <tr>
+                        <th>8994</th>
+                        <td>941.445</td>
+                        <td>941.386</td>
+                        <td>941.332</td>
+                        <td>940.485</td>
+                </tr>
+        </tbody>
+</table>
+
+<p>Used hardware:</p>
+<ul>
+    <li>GbE network</li>
+    <li>Dell blades PE1955</li>
+    <li>Broadcom NetXtreme II BCM5708, PCI-X 64-bit 133MHz</li>
+    <li>2x Dual Core Intel Xeon 5160, 3.0 GHz</li>
+</ul>

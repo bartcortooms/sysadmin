@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# Converts Outlook PST mailboxes to the mbox format with readpst.  Use
+# mbox2cyrus to convert them to Cyrus mailboxes.
+
+set -e
+
+for mbox in *; do
+	mkdir ${mbox%.pst}
+	readpst -r -o ${mbox%.pst} $mbox
+done

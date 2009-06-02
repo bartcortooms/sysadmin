@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# If the files "FoO" as well as "foo" exist, and if they differ in contents,
+# and FoO has been accessed more recently than foo, then output "FoO".
+
+# Needed to make sure [A-Z] doesn't match lowercase. See
+# http://teaching.idallen.com/net2003/06w/notes/character_sets.txt
+LC_COLLATE="C"
+export LC_COLLATE
+
+ls *[A-Z]* | while read file; do
+	lowercase=$(echo $file | tr A-Z a-z)
+	cmp $file $lowercase >/dev/null ||
+		( orig_timestamp=$(stat -c '%X' $file)
+		  lowercase_timestamp=$(stat -c '%X' $lowercase)
+		  [ "$orig_timestamp" -gt "$lowercase_timestamp" ] && ls -l $file )
+done

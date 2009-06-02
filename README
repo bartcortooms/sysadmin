@@ -1,0 +1,28 @@
+cheatsheets/
+
+	Various command line incantations and other notes which I use so little
+I tend to forget them.
+
+docs/
+	Various short (or not so short) documents, for users, developers and
+myself.  A large part of these are in Dutch.
+
+scripts/
+
+	Contains several small, often pretty stupid one-off scripts for various
+sysadmin tasks.  Most of these are really simple, but would cause me just
+enough pain if I needed to rewrite them from scratch to motive me to archive
+them here.
+
+	You're free to use them as well, but none of the scripts are guaranteed
+to work in your setup, and some might even fail spectacularly, so:
+
+	BEWARE: USING THESE SCRIPTS MAY DESTROY YOUR DATA
+
+	I'm also not going to support these scripts, but patches are welcome.
+(No guarantees I'll apply them though - so feel free to distribute your own
+versions!)
+
+
+-- 
+	Bart Cortooms <bart@hiccup.nl>

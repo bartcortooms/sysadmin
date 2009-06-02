@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# Returns output in LDIF formaat, which can be used for adding new attributes
+# to each LDAP account.
+#
+# Call with:
+#
+#	./add_user_attributes > modified.ldif
+# 	ldapmodify -x -W -D 'cn=admin,dc=example,dc=com' -f modified.ldif
+
+ldapsearch -x -L objectclass=posixAccount cn | \
+
+awk '	function print_ldif_command(dn, cn, given_name)
+	{
+		print "####################################################"
+		print "# " cn
+		print "####################################################"
+		print "dn: " dn
+		print "add: givenName"
+		print "givenName: " given_name
+		print "-"
+		print "add: initials"
+		print "initials: unknown"
+		print "-"
+		print "add: o"
+		print "o: ACME Inc"
+		print "-"
+		print "add: employeeNumber"
+		print "employeeNumber: unknown"
+		print "-"
+		print "add: fax"
+		print "fax: unknown"
+		print "-"
+		print "add: pager"
+		print "pager: unknown"
+		print "-"
+		print "add: description"
+		print "description: none"
+		print "-"
+		print "add: telephoneNumber"
+		print "telephoneNumber: 000"
+		print "-"
+		print "add: mobile"
+		print "mobile: +31 6 "
+		print ""
+	}
+
+	/^dn: /		{ dn = $2; first_name = "" }
+	/^cn: /		{ first_name = $2; cn = $0 }
+
+	/^ *$/ {
+		if (dn)
+			print_ldif_command(dn, cn, first_name)
+
+		dn = ""
+	}'

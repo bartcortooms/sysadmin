@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+#
+# Generates sessions from an Apache log file, useful for replaying with httperf
+
+use strict;
+use DateTime;
+use DateTime::Format::Strptime;
+
+my %request = undef;
+my %previous = undef;
+my $timestamp;
+my $date_parser = new DateTime::Format::Strptime(pattern => '%d/%b/%Y:%H:%M:%S %z');
+
+while (<>) {
+	/^[0-9.]+ - - \[([^\]]+)\] "([^ ]+) ([^ ]+) HTTP\/1.1" ([0-9]+) [0-9-]+ "([^"]+)"/;
+
+	%request = (
+		date		=> $date_parser->parse_datetime($1),
+		command		=> $2,
+		url		=> $3,
+		code		=> $4,
+		referrer	=> $5,
+	);
+
+	unless (exists $previous{'url'}) {
+		$timestamp = $request{'date'}->strftime("%s");
+		next;
+	}
+
+	if ($request{"referrer"} =~ /.css$/) {
+		$request{"referrer"} = $previous{"referrer"};
+	}
+
+	if ($request{"referrer"} eq $previous{"referrer"}) {
+		print "\t$previous{'url'}\n";
+	} else {
+		my $elapsed_seconds = $request{'date'}->strftime('%s') - $timestamp;
+		print "$previous{'url'} think=$elapsed_seconds\n";
+		$timestamp = $request{'date'}->strftime('%s');
+	}
+} continue {
+	%previous = %request;
+	$previous{'date'} = $request{'date'}->clone();
+}

@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+#
+# Use dmidecode to print the installed DIMMs and their serial numbers
+#
+# Call with:
+#
+#   dmidecode | ./dimms
+
+while (<>) {
+	$locator=$1 if /Locator: DIMM([0-9]+)/;
+	$manufacturer=$1 if /Manufacturer: (.*)/;
+	$serial=$1 if /Serial Number: (.*)/;
+
+	if (/^$/ && $locator != "" && $serial != "") {
+		print " * DIMM $locator: $serial (manufacturer $manufacturer)\n";
+		$serial = $manufacturer = $locator = "";
+	}
+}

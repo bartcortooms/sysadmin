@@ -1,0 +1,40 @@
+Local backups
+
+  Local backups are made with "rsnapshot":http://www.rsnapshot.org/. rsnapshot is set to create a backup every 4 hours. Of these 4-hourly snapshots (backups) 6 snapshots are saved, totalling a set of 4-hourly backups for one full day (24 hours). In addition to the hourly snapshots, there are 7 daily, 4 weekly snapshots and 6 monthly snapshots which are kept. This means we can go back 6 months when restoring a backup.
+
+The local backups are saved in /var/backups/rsnapshot, whose contents look similar to this::
+
+  bart@backupserver:/var/backups/rsnapshot$ ls -x
+  daily.0   daily.1   daily.2   daily.3   daily.4   daily.5   daily.6
+  hourly.0  hourly.1  hourly.2  hourly.3  hourly.4  hourly.5
+
+hourly.0 is the latest snapshot, at most 4 hours old.  hourly.1 is the previous snapshot, created 4 hours before hourly.0, and so on. daily.0 is the latest daily snapshot, at most 1 day old. After a while new directories will appear for weekly and monthly.
+
+If the exact same file exists in multiple snapshots, rsnapshot will store the file only once. It does this by using hardlinks. This means that if a file remained unchanged since the last snapshot was made, a hardlink will be created for the file in the new snapshot directory, which does not require an (significant) disk space. If a file changes (even if it's a 1 byte change), the entire changed file will be copied to the hourly.0 snapshot directory and the old version of the file remains in the previous snapshot (hourly.1).
+
+Offsite backups
+
+  Offsite backups are made with "rdiff-backup":http://www.nongnu.org/rdiff-backup. rdiff-backup is based on the rsync-algorithm and only sends the difference between two files to the backup-server. All deltas (diffs) between files are saved, making it possible to restore a previous version of a file.
+
+rdiff-backups are stored on the backup server (lets say it's called "backupserver") in a special backup directory (say, "/backups"). The directory looks as follows::
+
+  bart@backupserver:/backups$ ls
+  etc  home  rdiff-backup-data  root  usr  var
+
+When a file changes, only the delta (the difference) is saved, in the rdiff-backup-data directory. This makes rdiff-backup more space efficient than rsnapshot, which always stores the entire file. The directories of which backups are made, here /etc, /home, /root, /usr/local and /var, always contain the latest backup of a file.
+
+Restoring the latest backup of a file is simply a matter of copying it from the backup directory. Restoring a previous version of a file can only be done by using the rdiff-backup command. See the manpage for details.
+
+rdiff-backup gets started as root, from a cronjob on the server of which the backup is being made. It uses ssh to log in to the backup server and transports all data to the backup server through this ssh-connection.
+
+rdiff-backup uses a public and private key pair for the SSH session, making it possible to log in without having to enter a password. The file /backups/.ssh/authorized_keys contains the public key of the root user at the server of which a backup is made, and can only be used to call rdiff-backup in server mode. This key has several restrictions: no tty or forwarding is allowed, only connections from the server are allowed, etc.
+
+/backups/.ssh/authorized_keys contains the following::
+
+  from="*192.168.2.4",no-pty,no-port-forwarding,no-agent-forwarding,
+  command="rdiff-backup --server --restrict /backups"
+  no-X11-forwarding ssh-rsa AAAAB3NzaC1yc2EAAAA...
+
+*Note*: Although the above shows several lines for readability, this is actually just one long line.
+
+To make sure the ssh server on the backup server looks in '/backups' for the authorized_keys file, /backups is set as the home directory of the user 'backup'. The group and owner of /backups are set to backup:backup, allowing the user backup to write files in this directory.

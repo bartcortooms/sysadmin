@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Returns output in LDIF formaat, which can be used for changing the domain in
+# email addresses.
+#
+# Call with:
+#
+#       ./change_email_domain > mailchange.ldif
+#       ldapmodify -Z -x -W -D 'cn=admin,dc=example,dc=com' -f mailchange.ldif
+
+ldapsearch -x -LLL objectclass=inetOrgPerson mail | \
+
+awk '   function is_empty(array) {
+		for (x in array) return 0
+		return 1
+	}
+
+	function print_ldif_command(dn, mail)
+        {
+                print "dn:", dn
+                print "changetype: modify"
+                print "replace: mail"
+		for (address in mail) {
+			print "#", address
+			gsub("example.com", "newdomain.com", address)
+			print "mail:", address
+		}
+		print
+        }
+
+        /^dn: / { delete mail; dn = $2 }
+        /^mail: / { mail[$2] = $2 }
+
+        /^ *$/ {
+		if (!is_empty(mail))
+			print_ldif_command(dn, mail)
+             }'

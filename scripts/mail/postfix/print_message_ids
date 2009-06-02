@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Print the message IDs for all mails in the mail queue which have $ADDRESS as
+# the recipient.  Based on the example in postsuper(1), from Postfix.
+#
+# Useful for removing all mails to a specific address from the mail queue, e.g. with:
+#
+#   ./print_message_ids bart@example.com | postsuper -d -
+
+ADDRESS="$1"
+
+mailq | tail +2 | grep -v '^ *(' | awk  'BEGIN { RS = "" }
+                  # $7=sender, $8=recipient1, $9=recipient2
+                  { if ($8 ~ "[0-9]+$ADDRESS" && $9 == "MAILER-DAEMON")
+                        print $1 }
+              ' | tr -d '*!'

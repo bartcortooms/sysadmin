@@ -1,0 +1,85 @@
+Met HTTPS kan de verbinding met een website worden beveiligd. Hiervoor heb je
+twee dingen nodig:
+
+  * Een certificaat
+  * Een IP adres
+
+Het certificaat kun je zelf regelen, het IP adres zul je bij ons moeten
+aanvragen. Met de instructies hieronder kun je zelf een certificaat maken.
+Daarvoor is het allereerst nodig een Certificate Signing Request (CSR) aan te
+maken, die je vervolgens digitaal kunt laten ondertekenen (signen) door een
+Certificate Authority (CA). 
+
+Het aanmaken van een CSR kan op de shared hosting server van ons. Allereerst
+zul je een server key moeten aanmaken. De beveiliging van de HTTPS verbinding
+staat en valt met het geheim blijven van deze key. Je kunt deze dan ook het
+beste meteen op de shared hosting server aanmaken, met de volgende commando's:
+
+ $ mkdir ~/certs
+ $ cd ~/certs
+ $ (umask 077; openssl genrsa -out serverkey.pem 1024)
+
+Het aanmaken van de serverkey is maar 1 keer nodig: voor eventuele volgende
+CSR's kan de bestaande serverkey gebruikt worden.
+
+Er zijn twee opties voor het aanmaken van het certificaat:
+
+ * Een domeingebonden certificaat, dat maar voor 1 (sub)domein te gebruiken is.
+ * Een zogenaamd "wildcard" certificaat dat voor alle subdomeinen van een bepaald domein gebruikt kan worden.
+
+Over het algemeen zijn wildcard certificaten wat duurder dan domeingebonden certificaten.
+
+Een domeingebonden certificaat voor bijvoorbeeld www.mijndomein.nl kan als
+volgt aangemaakt worden. De naam van het domein en de ingevulde gegevens zijn
+uiteraard slechts ter voorbeeld:
+
+ $ cd ~/certs
+ $ openssl req -new -out www.mijndomein.nl.csr -key serverkey.pem
+ You are about to be asked to enter information that will be incorporated
+ into your certificate request.
+ What you are about to enter is what is called a Distinguished Name or a DN.
+ There are quite a few fields but you can leave some blank
+ For some fields there will be a default value,
+ If you enter '.', the field will be left blank.
+ -----
+ Country Name (2 letter code) [NL]:
+ State or Province Name (full name) []:Noord-Brabant
+ Locality Name (eg, city) []:Eindhoven
+ Organization Name (eg, company) []:Mijn Organisatie
+ Organizational Unit Name (eg, section) []:
+ Common Name (eg, YOUR name) []:www.mijndomein.nl
+ Email Address []:webmaster@mijndomein.nl
+
+ Please enter the following 'extra' attributes
+ to be sent with your certificate request
+ A challenge password []:
+ An optional company name []:
+
+Vul bij Common Name de domeinnaam van de website die beveiligd moet worden in,
+in dit geval dus www.mijndomein.nl. Om een wildcard certificaat aan te vragen
+vul je "*.mijndomein.nl" in bij Common Name. Vul geen wachtwoord in wanneer
+daar om gevraagd wordt.
+
+Het resultaat van het bovenstaande commando is een bestaand genaamd
+www.mijndomein.nl.csr. Dit is de Certificate Signing Request, die nog door een
+Certificate Authority ondertekend moet worden om als certificaat gebruikt te
+kunnen worden. Er zijn verschillende Certificate Authorities, varierend in
+prijs en de zorgvuldigheid waarmee gecontroleerd wordt of de aanvrager van het
+certificaat inderdaad de eigenaar van het domein is. Welke CA gebruikt wordt
+maakt geen verschil voor de shared hosting omgeving, maar enkele bekende zijn:
+
+   Thawte - http://www.thawte.com/
+   RapidSSL - http://www.rapidssl.com/
+   Xolphin - http://www.sslcertificaten.nl/
+
+Als er gekozen moet worden voor een bepaald type certificaat, kies dan voor
+"Apache / mod_ssl". Soms wordt er alleen een keuze gegeven voor het
+bestandsformaat. Kies in dat geval voor "PEM".
+
+De CA levert vervolgens een ondertekend certificaat. Plaats dit certificaat in
+de directory ~/certs, met de rechten "rw-r--r--" (644).
+
+Mail vervolgens ons met het verzoek om de webserver configuratie zo aan te
+passen dat de website ook HTTPS ondersteunt, gebruikmakend van het certificaat.
+Vermeld hierbij het domein waar het om gaat, en de bestandsnaam van het
+certificaat.

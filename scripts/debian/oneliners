@@ -1,0 +1,5 @@
+# Upgrade a package if it's been installed
+dpkg-query -f '${Status}\n' -W package | grep -q 'install ok installed' && sudo apt-get install package
+
+# Get the highest UID from /etc/passwd
+sort -n -k3 -t: /etc/passwd | grep -E '[^:]+:[^:]+:[0-9]{3}:' | tail -1

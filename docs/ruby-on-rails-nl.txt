@@ -1,0 +1,126 @@
+'''Let op:''' We bieden geen enkele ondersteuning voor scripttalen anders dan
+PHP op de shared hosting server van Kumina. We garanderen dan ook niet dat Ruby
+altijd geinstalleerd zal zijn. Er is echter tenminste 1 Ruby/Rails sympathisant
+binnen Kumina, dus de kans dat het redelijk blijft werken is vrij groot. ;-)
+
+== Ruby on Rails installeren ==
+
+Het is waarschijnlijk het handigst als je zelf kunt bepalen wanneer je Rails
+upgrade, zodat je site niet stuk gaat als wij een Rails upgrade doen. Je kunt
+zelf Rails installeren door de ruby gems in je eigen homedir te zetten. Om
+ervoor te zorgen dat de gems in je eigen homedir geinstalleerd worden zijn er
+wat instellingen nodig:
+
+Zoiets als het volgende in je ~/.bash_profile:
+
+<pre>
+# Ruby gems
+GEM_HOME=~/.rubygems
+export GEM_HOME
+if [ -d ~/.rubygems/bin ] ; then
+   PATH=~/.rubygems/bin:"${PATH}"
+fi
+</pre>
+
+Daarna:
+
+<pre>
+$ mkdir ~/.rubygems
+$ source ~/.bash_profile
+$ gem install rails
+</pre>
+
+== Rails site aanmaken ==
+
+Verder zijn alle libraries al geinstalleerd om Rails te kunnen gebruiken binnen
+elk hosting account. Extra ruby libraries en plugins zijn te installeren met
+'gem install' en 'script/plugin install'. Er zijn wel een paar dingen die je
+moet aanpassen in de .htaccess van je Rails app om ervoor te zorgen dat het op
+onze hosting omgeving werkt (voor fastcgi e.d.). Het is een beetje een gedoe om
+alles goed werkend te krijgen, maar het zijn maar een paar kleine dingen die je
+hoeft aan te passen.
+
+Alleen de public/ dir van de Rails app hoeft rechtstreeks onder ~/www komen te
+staan, de rest hoeft er niet onder te staan. Een optie is dan ook om de Rails
+app buiten www/ te houden en dan in ~/www de public/ dir te symlinken, met als
+symlinknaam de naam van het domein.
+
+Bijvoorbeeld:
+
+<pre>
+$ cd ~/code
+$ rails myapp
+
+$ cd ~/www
+$ ln -s ~/code/myapp/public myapp.mydomain.nl
+</pre>
+
+Dan is er nog een .htaccess nodig die ervoor zorgt dat FastCGI wordt gebruikt.
+Een voorbeeld is te vinden in /usr/local/etc/rails.htaccess, en onderaan deze
+pagina. Plaats de .htaccess in ~/www/myapp.mydomain.nl:
+
+<pre>
+$ cp /usr/local/etc/rails.htaccess ~/www/myapp.mydomain.nl/.htaccess
+</pre>
+
+Het instellen van de environment variabele die de rails environment bepaalt
+(RAILS_ENV), is niet mogelijk met FastCGI+suEXEC, maar een alternatief is om in
+config/environment.rb de environment te veranderen naar de gewenste waarde,
+bijvoorbeeld production. Er zijn wellicht betere methoden die ook werken -
+suggesties welkom!
+
+Als je nu naar http://myapp.mydomain.nl/index.html gaat, zou je een
+welkomstpagina voor Ruby on Rails moeten zien. Zo niet, dan zijn
+~/logs/error.log, ~/code/myapp/fastcgi.crash.log en
+~/code/myapp/<environment>.log de beste plekken om te achterhalen wat er fout
+gaat.
+
+Af en toe kan het nodig zijn om het bestaande ruby proces dat door fastcgi
+gestart wordt af te schieten om aanpassingen op te laten pikken. Met 'ps x' zie
+je het Rails proces als "/usr/bin/ruby1.8 dispatch.fcgi" erbij staan, met
+'kill' kun je het proces afsluiten. Apache start automatisch weer een nieuw
+ruby proces op via FastCGI bij de eerstvolgende request die binnenkomt.
+
+== .htaccess voorbeeld ==
+
+<pre>
+# General Apache options
+AddHandler fcgid-script .fcgi
+#AddHandler cgi-script .cgi
+Options +FollowSymLinks +ExecCGI
+
+# If you don't want Rails to look in certain directories,
+# use the following rewrite rules so that Apache won't rewrite certain requests
+#
+# Example:
+#   RewriteCond %{REQUEST_URI} ^/notrails.*
+#   RewriteRule .* - [L]
+
+# Redirect all requests not available on the filesystem to Rails
+# By default the cgi dispatcher is used which is very slow
+#
+# For better performance replace the dispatcher with the fastcgi one
+#
+# Example:
+#   RewriteRule ^(.*)$ dispatch.fcgi [QSA,L]
+RewriteEngine On
+
+# If your Rails application is accessed via an Alias directive,
+# then you MUST also set the RewriteBase in this htaccess file.
+#
+# Example:
+#   Alias /myrailsapp /path/to/myrailsapp/public
+#   RewriteBase /myrailsapp
+
+RewriteRule ^([^.]+)$ $1.html [QSA]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ /dispatch.fcgi [QSA,L]
+
+# In case Rails experiences terminal errors
+# Instead of displaying this message you can supply a file here which will be rendered instead
+#
+# Example:
+#   ErrorDocument 500 /500.html
+
+ErrorDocument 500 "<h2>Application error</h2>Rails application failed to start properly"
+</pre>

@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+#
+# See README
+
+use HTTP::Proxy;
+use HTTP::Recorder::Httperf;
+
+my $proxy = HTTP::Proxy->new();
+my $agent = new HTTP::Recorder::Httperf;
+$agent->temp_file('/tmp/httperf_recorder_time');
+
+# set the log file (optional)
+$agent->file("/tmp/httperf_proxy.log");
+
+# set HTTP::Recorder as the agent for the proxy
+$proxy->agent($agent);
+
+# start the proxy
+$proxy->host(undef);
+$proxy->start();
+
+1;
