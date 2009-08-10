@@ -1,0 +1,285 @@
+#!/bin/sh
+
+type=incr
+numb=0 
+
+# Day
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-day.png \
+  --title 'Foo uploads - by day' \
+  --imgformat PNG \
+  --start -30h \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "uploads / 5 min." \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+  "COMMENT: Avg\: " \
+  "GPRINT:guploads:LAST:%6.2lf%s" \
+  "COMMENT: Max\: " \
+  "GPRINT:auploads:LAST:%6.2lf%s"
+
+# Week
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-week.png \
+  --title 'Foo uploads - by week' \
+  --imgformat PNG \
+  --start -8d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "uploads / 5 min." \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+  "COMMENT: Avg\: " \
+  "GPRINT:guploads:LAST:%6.2lf%s" \
+  "COMMENT: Max\: " \
+  "GPRINT:auploads:LAST:%6.2lf%s"
+
+# Month
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-month.png \
+  --title 'Foo uploads - by month' \
+  --imgformat PNG \
+  --start -33d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "uploads / 5 min." \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+  "COMMENT: Avg\: " \
+  "GPRINT:guploads:LAST:%6.2lf%s" \
+  "COMMENT: Max\: " \
+  "GPRINT:auploads:LAST:%6.2lf%s"
+
+# Year
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-year.png \
+  --title 'Foo uploads - by year' \
+  --imgformat PNG \
+  --start -400d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "uploads / 5 min." \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+  "COMMENT: Avg\: " \
+  "GPRINT:guploads:LAST:%6.2lf%s" \
+  "COMMENT: Max\: " \
+  "GPRINT:auploads:LAST:%6.2lf%s"
+
+# 3 years
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-3year.png \
+  --title 'Foo uploads - last 3 years' \
+  --imgformat PNG \
+  --start -1095d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "uploads / 5 min." \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+  "COMMENT: Avg\: " \
+  "GPRINT:guploads:LAST:%6.2lf%s" \
+  "COMMENT: Max\: " \
+  "GPRINT:auploads:LAST:%6.2lf%s"
+
+type=abs
+numb=0 
+
+# Day
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-day.png \
+  --title 'Number of foo - by day' \
+  --imgformat PNG \
+  --start -30h \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Number of foo" \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+
+# Week
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-week.png \
+  --title 'Number of foo - by week' \
+  --imgformat PNG \
+  --start -8d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Number of foo" \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+
+# Month
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-month.png \
+  --title 'Number of foo - by month' \
+  --imgformat PNG \
+  --start -33d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Number of foo" \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+
+# Year
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-year.png \
+  --title 'Number of foo - by year' \
+  --imgformat PNG \
+  --start -400d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Number of foo" \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+
+# 3 years
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-3year.png \
+  --title 'Number of foo - by 3 years' \
+  --imgformat PNG \
+  --start -1095d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Number of foo" \
+  DEF:guploads=foo-$type.rrd:42:AVERAGE \
+  DEF:iuploads=foo-$type.rrd:42:MIN \
+  DEF:auploads=foo-$type.rrd:42:MAX \
+  CDEF:cuploads=guploads \
+  LINE2:guploads#0022ff:'uploads' \
+  "COMMENT: Cur\: " \
+  "GPRINT:cuploads:LAST:%6.2lf%s" \
+
+type=size
+numb=0 
+
+# Day
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-day.png \
+  --title 'Foo disk space usage - by day' \
+  --imgformat PNG \
+  --start -30h \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Disk space" \
+  DEF:gsize=foo-$type.rrd:42:AVERAGE \
+  DEF:isize=foo-$type.rrd:42:MIN \
+  DEF:asize=foo-$type.rrd:42:MAX \
+  CDEF:csize=gsize \
+  LINE2:gsize#0022ff:'Total size' \
+  "COMMENT: Cur\: " \
+  "GPRINT:csize:LAST:%6.2lf%s" \
+
+# Week
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-week.png \
+  --title 'Foo disk space usage - by week' \
+  --imgformat PNG \
+  --start -8d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Disk space" \
+  DEF:gsize=foo-$type.rrd:42:AVERAGE \
+  DEF:isize=foo-$type.rrd:42:MIN \
+  DEF:asize=foo-$type.rrd:42:MAX \
+  CDEF:csize=gsize \
+  LINE2:gsize#0022ff:'Total size' \
+  "COMMENT: Cur\: " \
+  "GPRINT:csize:LAST:%6.2lf%s" \
+
+# Month
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-month.png \
+  --title 'Foo disk space usage - by month' \
+  --imgformat PNG \
+  --start -33d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Disk space" \
+  DEF:gsize=foo-$type.rrd:42:AVERAGE \
+  DEF:isize=foo-$type.rrd:42:MIN \
+  DEF:asize=foo-$type.rrd:42:MAX \
+  CDEF:csize=gsize \
+  LINE2:gsize#0022ff:'Total size' \
+  "COMMENT: Cur\: " \
+  "GPRINT:csize:LAST:%6.2lf%s" \
+
+# Year
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-year.png \
+  --title 'Foo disk space usage - by year' \
+  --imgformat PNG \
+  --start -400d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Disk space" \
+  DEF:gsize=foo-$type.rrd:42:AVERAGE \
+  DEF:isize=foo-$type.rrd:42:MIN \
+  DEF:asize=foo-$type.rrd:42:MAX \
+  CDEF:csize=gsize \
+  LINE2:gsize#0022ff:'Total size' \
+  "COMMENT: Cur\: " \
+  "GPRINT:csize:LAST:%6.2lf%s" \
+
+# 3 years
+numb=$((numb+1))
+rrdtool graph foo-$type-$numb-3year.png \
+  --title 'Foo disk space usage - by 3 years' \
+  --imgformat PNG \
+  --start -1095d \
+  --base 1000 \
+  --lower-limit 0 \
+  --vertical-label "Disk space" \
+  DEF:gsize=foo-$type.rrd:42:AVERAGE \
+  DEF:isize=foo-$type.rrd:42:MIN \
+  DEF:asize=foo-$type.rrd:42:MAX \
+  CDEF:csize=gsize \
+  LINE2:gsize#0022ff:'Total size' \
+  "COMMENT: Cur\: " \
+  "GPRINT:csize:LAST:%6.2lf%s" \

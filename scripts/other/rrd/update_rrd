@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+
+use strict;
+use DateTime;
+use DateTime::Format::Strptime;
+
+my %request = undef;
+my %previous = undef;
+my $timestamp;
+my $date_parser = new DateTime::Format::Strptime(pattern => '%Y-%m-%d %H:%M:%S');
+$date_parser->time_zone("Europe/Amsterdam");
+
+my $last = undef;
+my $count = 0;
+my @counts = ();
+my $size = 0;
+my @sizes = ();
+my $heartbeat = 300;
+
+sub addvalue {
+	my ($values) = shift;
+	my $timestamp = shift;
+	my $newvalue = shift;
+	my @files = @_;
+
+	push @$values, "$timestamp:$newvalue";
+
+	if (scalar(@$values) > 100) {
+		foreach my $file (@files) {
+			print "rrdtool update $file ", join(" ", @$values), "\n";
+		}
+
+		@$values = ();
+	}
+}
+
+while (<>) {
+	my @details = split /\t/;
+	my $foo_size = $details[2];
+	my $foo_date = $date_parser->parse_datetime($details[3]);
+	my $foo_timestamp = $foo_date->strftime("%s");
+
+	if ($last eq undef) {
+		# First line
+		$last = $foo_timestamp;
+	}
+
+	if ($foo_timestamp - $last < $heartbeat) {
+		$count++;
+		$size = $size + $foo_size;
+	} else {
+		addvalue(\@counts, $last, $count, "foo-abs.rrd", "foo-incr.rrd");
+		addvalue(\@sizes, $last, $size, "foo-size.rrd");
+
+		# Make sure update delays do not overrun the rrd heartbeat
+		my $times = ($foo_timestamp - $last) / $heartbeat;
+		my $i;
+
+		for ($i=1; $i < $times; $i++) {
+			addvalue(\@counts, $last+$i*$heartbeat, $count, "foo-abs.rrd", "foo-incr.rrd");
+			addvalue(\@sizes, $last+$i*$heartbeat, $size, "foo-size.rrd");
+		}
+
+		$last = $foo_timestamp;
+		$size = $size + $foo_size;
+		$count++;
+	}
+}
+
+print "rrdtool update foo-abs.rrd ", join(" ", @counts), "\n";
+print "rrdtool update foo-incr.rrd ", join(" ", @counts), "\n";
+print "rrdtool update foo-size.rrd ", join(" ", @sizes), "\n";
