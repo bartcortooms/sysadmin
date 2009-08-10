@@ -1,0 +1,32 @@
+#!/usr/bin/python
+import getpass, imaplib
+
+folders =  (
+	'Advisories',
+	'Archive',
+	'Archive.2000',
+	'Archive.2001',
+	'Archive.2002',
+	'Archive.2003',
+	'Archive.2004',
+	'Archive.2005',
+	'Archive.2006',
+	'Archive.2007',
+	'Archive.2008',
+	'Lists',
+	'Lists.Debian',
+	'Lists.Enosig',
+	'Lists.Fosdem',
+)
+
+m = imaplib.IMAP4_SSL('imap.gmail.com')
+password = getpass.getpass()
+username = 'username'
+m.login(username, password)
+
+for folder in folders:
+	result, data = m.list(pattern=folder)
+	if result == 'OK' and data[0] == None:
+		print "Creating %s: " % folder,
+		result, data = m.create(folder)
+		print '%s (%s)' % (result, data)
